@@ -1,0 +1,330 @@
+openapi: 3.0.1
+info:
+  title: Claims Management API
+  version: '1.0'
+servers:
+  - url: https://claims-api-740392458099.us-central1.run.app/api
+    description: Servidor de producción
+  - url: http://localhost:8089/api
+    description: Servidor local
+tags:
+  - name: Claims
+    description: Operaciones de gestión de reclamos
+  - name: Master Data
+    description: Operaciones para obtener datos maestros
+  - name: Health Check
+    description: Verificación del estado del servicio
+
+paths:
+  /claims:
+    post:
+      tags:
+        - Claims
+      summary: Crear un nuevo reclamo
+      operationId: createClaim
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimRequestDTO'
+      responses:
+        '201':
+          description: Reclamo creado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimResponseDTO'
+        '400':
+          description: Datos de entrada inválidos
+    get:
+      tags:
+        - Claims
+      summary: Obtener todos los reclamos con su último estado
+      operationId: getAllClaims
+      responses:
+        '200':
+          description: Lista de reclamos recuperada exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClaimListItemDTO'
+
+  /claims/{id}:
+    get:
+      tags:
+        - Claims
+      summary: Obtener detalle de reclamo por ID
+      operationId: getClaimById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Detalle del reclamo recuperado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimDetailDTO'
+        '404':
+          description: Reclamo no encontrado
+
+  /claims/{id}/status:
+    post:
+      tags:
+        - Claims
+      summary: Actualizar estado del reclamo
+      operationId: updateClaimStatus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimStatusRequestDTO'
+      responses:
+        '200':
+          description: Estado actualizado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimResponseDTO'
+        '404':
+          description: Reclamo no encontrado
+
+  /master-data:
+    get:
+      tags:
+        - Master Data
+      summary: Obtener todos los datos maestros
+      operationId: getMasterData
+      responses:
+        '200':
+          description: Datos maestros recuperados exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MasterDataDTO'
+
+  /master-data/companies:
+    get:
+      tags:
+        - Master Data
+      summary: Obtener lista de empresas
+      operationId: getCompanies
+      responses:
+        '200':
+          description: Lista de empresas recuperada exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /master-data/reasons:
+    get:
+      tags:
+        - Master Data
+      summary: Obtener lista de razones
+      operationId: getReasons
+      responses:
+        '200':
+          description: Lista de razones recuperada exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /master-data/statuses:
+    get:
+      tags:
+        - Master Data
+      summary: Obtener lista de estados
+      operationId: getStatuses
+      responses:
+        '200':
+          description: Lista de estados recuperada exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /health:
+    get:
+      tags:
+        - Health Check
+      summary: Verificar estado del servicio
+      operationId: health
+      responses:
+        '200':
+          description: Servicio funcionando correctamente
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "OK"
+
+components:
+  schemas:
+    ClaimRequestDTO:
+      type: object
+      required:
+        - company
+        - reason
+        - description
+        - email
+      properties:
+        company:
+          type: string
+          description: Empresa relacionada con el reclamo
+        reason:
+          type: string
+          description: Motivo del reclamo
+        description:
+          type: string
+          description: Descripción detallada del reclamo
+        email:
+          type: string
+          format: email
+          description: Correo electrónico del cliente
+
+    ClaimResponseDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: "REC000123"
+        company:
+          type: string
+        reason:
+          type: string
+        description:
+          type: string
+        attachments:
+          type: array
+          items:
+            type: string
+        customerEmail:
+          type: string
+        creationDate:
+          type: string
+          format: date-time
+        status:
+          type: string
+        updateUser:
+          type: string
+
+    ClaimDetailDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        company:
+          type: string
+        reason:
+          type: string
+        description:
+          type: string
+        attachments:
+          type: array
+          items:
+            type: string
+        customerEmail:
+          type: string
+        status:
+          type: string
+        creationDate:
+          type: string
+          format: date-time
+        statusHistory:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusHistoryDTO'
+
+    ClaimListItemDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        company:
+          type: string
+        reason:
+          type: string
+        status:
+          type: string
+        creationDate:
+          type: string
+          format: date-time
+
+    ClaimStatusRequestDTO:
+      type: object
+      required:
+        - status
+        - agentComment
+        - agentEmail
+      properties:
+        status:
+          type: string
+          description: Nuevo estado del reclamo
+        agentComment:
+          type: string
+          description: Comentario del agente
+        agentEmail:
+          type: string
+          format: email
+          description: Correo electrónico del agente
+
+    StatusHistoryDTO:
+      type: object
+      properties:
+        status:
+          type: string
+        agentComment:
+          type: string
+        agentEmail:
+          type: string
+        creationDate:
+          type: string
+          format: date-time
+
+    MasterDataDTO:
+      type: object
+      properties:
+        companies:
+          type: array
+          items:
+            type: string
+        reasons:
+          type: array
+          items:
+            type: string
+        statuses:
+          type: array
+          items:
+            type: string

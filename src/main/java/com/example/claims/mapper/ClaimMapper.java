@@ -33,6 +33,7 @@ public class ClaimMapper {
         dto.setCustomerEmail(claim.getCustomerEmail());
         dto.setStatus(claim.getStatus());
         dto.setCreationDate(claim.getCreationDate());
+        dto.setUpdateUser(claim.getUpdateUser());
         return dto;
     }
 
